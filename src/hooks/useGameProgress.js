@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
-const SAVE_KEY = 'sql-monster-save-v1';
+const DEFAULT_SAVE_KEY = 'sql-monster-save-v1';
 
-export const useGameProgress = (totalChapters) => {
+export const useGameProgress = (totalChapters, saveKey = DEFAULT_SAVE_KEY) => {
     const [progress, setProgress] = useState({
         chapterIdx: 0,
         levelIdx: 0,
@@ -14,7 +14,7 @@ export const useGameProgress = (totalChapters) => {
     // Load from local storage on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem(SAVE_KEY);
+            const saved = localStorage.getItem(saveKey);
             if (saved) {
                 setProgress(JSON.parse(saved));
             }
@@ -22,14 +22,14 @@ export const useGameProgress = (totalChapters) => {
             console.error("Failed to load save", e);
         }
         setIsLoaded(true);
-    }, []);
+    }, [saveKey]);
 
     // Save whenever progress changes
     useEffect(() => {
         if (isLoaded) {
-            localStorage.setItem(SAVE_KEY, JSON.stringify(progress));
+            localStorage.setItem(saveKey, JSON.stringify(progress));
         }
-    }, [progress, isLoaded]);
+    }, [progress, isLoaded, saveKey]);
 
     const advanceLevel = (currentChapter, currentChapterLevelCount) => {
         setProgress(prev => {
@@ -59,7 +59,7 @@ export const useGameProgress = (totalChapters) => {
     const resetProgress = () => {
         const initial = { chapterIdx: 0, levelIdx: 0, unlocked: { '0-0': true }, userName: null, certificateId: null };
         setProgress(initial);
-        localStorage.setItem(SAVE_KEY, JSON.stringify(initial));
+        localStorage.setItem(saveKey, JSON.stringify(initial));
     };
 
     const setUserName = (name) => {
