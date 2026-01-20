@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="128" fill="url(#bg)" />
+
+  <!-- Database Cylinder (Stylized) -->
+  <path d="M150 350 C150 380 362 380 362 350 V 162 C362 132 150 132 150 162 V 350 Z" fill="#1e1b4b" opacity="0.3"/>
+  <ellipse cx="256" cy="162" rx="106" ry="30" fill="#312e81" opacity="0.5"/>
+
+  <!-- Monster Face -->
+  <circle cx="200" cy="256" r="45" fill="white" />
+  <circle cx="312" cy="256" r="45" fill="white" />
+  
+  <circle cx="200" cy="256" r="18" fill="#0f172a">
+    <animate attributeName="cx" values="200;210;200" dur="3s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="312" cy="256" r="18" fill="#0f172a">
+    <animate attributeName="cx" values="312;322;312" dur="3s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- Smile -->
+  <path d="M 210 340 Q 256 370 302 340" stroke="white" stroke-width="25" fill="none" stroke-linecap="round" />
+</svg>

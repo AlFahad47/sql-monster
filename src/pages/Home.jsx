@@ -17,10 +17,18 @@ const Home = () => {
                 {t('description')}
             </p>
 
-            <div className="flex gap-6">
+            <div className="flex gap-6 flex-wrap justify-center">
                 <Link to="/story" className="group relative px-8 py-4 bg-blue-600 rounded-lg font-bold text-lg text-white overflow-hidden shadow-lg hover:shadow-blue-500/30 transition-all">
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
                     {t('startAdventure')}
+                </Link>
+                <Link to="/typescript" className="group relative px-8 py-4 bg-purple-600 rounded-lg font-bold text-lg text-white overflow-hidden shadow-lg hover:shadow-purple-500/30 transition-all">
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                    TypeScript Mode
+                </Link>
+                <Link to="/cyber-story" className="group relative px-8 py-4 bg-green-700 rounded-lg font-bold text-lg text-white overflow-hidden shadow-lg hover:shadow-green-500/30 transition-all font-mono">
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                    CYBER.SEC
                 </Link>
                 <Link to="/interview" className="px-8 py-4 bg-slate-800 border border-slate-700 rounded-lg font-bold text-lg text-white hover:bg-slate-700 hover:border-slate-600 transition-all">
                     {t('practiseInterview')}
