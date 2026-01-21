@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { FaDragon, FaCog, FaExclamationTriangle, FaSun, FaMoon, FaBars, FaTimes, FaGlobe } from 'react-icons/fa';
+import { FaDragon, FaCog, FaExclamationTriangle, FaSun, FaMoon, FaBars, FaTimes, FaGlobe, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import { useGameProgress } from '../hooks/useGameProgress';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAudio } from '../context/AudioContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MainLayout = () => {
@@ -14,6 +15,7 @@ const MainLayout = () => {
     const { resetProgress } = useGameProgress(0);
     const { theme, toggleTheme } = useTheme();
     const { language, toggleLanguage, t } = useLanguage();
+    const { isAudioEnabled, toggleAudio } = useAudio();
     const navigate = useNavigate();
 
     const handleConfirmReset = () => {
@@ -47,6 +49,15 @@ const MainLayout = () => {
                             title="Switch Language"
                         >
                             <FaGlobe /> {language === 'en' ? 'BN' : 'EN'}
+                        </button>
+
+                        {/* Audio Toggle */}
+                        <button
+                            onClick={toggleAudio}
+                            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300"
+                            title={isAudioEnabled ? "Mute Audio" : "Enable Audio"}
+                        >
+                            {isAudioEnabled ? <FaVolumeUp /> : <FaVolumeMute />}
                         </button>
 
                         {/* Theme Toggle */}
@@ -126,6 +137,12 @@ const MainLayout = () => {
                                     className="text-left w-full hover:text-monster-accent dark:hover:text-white py-2"
                                 >
                                     {language === 'en' ? 'Switch to Bangla' : 'ইংরেজিতে পরিবর্তন করুন'}
+                                </button>
+                                <button
+                                    onClick={toggleAudio}
+                                    className="text-left w-full hover:text-monster-accent dark:hover:text-white py-2 flex items-center gap-2"
+                                >
+                                    {isAudioEnabled ? <><FaVolumeUp /> Mute Audio</> : <><FaVolumeMute /> Enable Audio</>}
                                 </button>
                                 <button
                                     onClick={() => { setShowResetModal(true); setShowMobileMenu(false); }}

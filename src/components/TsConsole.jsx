@@ -1,11 +1,17 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import Editor from '@monaco-editor/react';
 import { FaPlay } from 'react-icons/fa';
 import { useTheme } from '../context/ThemeContext';
 
-const TsConsole = ({ initialCode = "", onExecute }) => {
+const TsConsole = forwardRef(({ initialCode = "", onExecute }, ref) => {
     const editorRef = useRef(null);
     const { theme } = useTheme();
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            editorRef.current?.focus();
+        }
+    }));
 
     // Initial configuration for the editor
     const handleEditorDidMount = (editor, monaco) => {
@@ -82,6 +88,8 @@ const TsConsole = ({ initialCode = "", onExecute }) => {
             </div>
         </div>
     );
-};
+});
+
+TsConsole.displayName = 'TsConsole';
 
 export default TsConsole;

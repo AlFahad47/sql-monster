@@ -18,7 +18,7 @@ export const validateLevel = (db, userQuery, level) => {
         // 1. Reset/Setup state (Always fresh state for validation)
         if (level.initSql) {
             // Drop common tables to ensure clean slate
-            db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures;");
+            db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures; DROP TABLE IF EXISTS employees; DROP TABLE IF EXISTS scroll_a; DROP TABLE IF EXISTS scroll_b; DROP TABLE IF EXISTS lib_a; DROP TABLE IF EXISTS lib_b;");
             db.exec(level.initSql);
         }
 
@@ -73,7 +73,7 @@ export const validateLevel = (db, userQuery, level) => {
 
             // RE-RESET for Target Calculation (Since we dirty-wrote with user query)
             if (level.initSql) {
-                db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures;");
+                db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures; DROP TABLE IF EXISTS employees; DROP TABLE IF EXISTS scroll_a; DROP TABLE IF EXISTS scroll_b; DROP TABLE IF EXISTS lib_a; DROP TABLE IF EXISTS lib_b;");
                 db.exec(level.initSql);
             }
 
@@ -109,7 +109,7 @@ export const validateLevel = (db, userQuery, level) => {
             // Standard SELECT validation
             // Setup again to be safe
             if (level.initSql) {
-                db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures;");
+                db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures; DROP TABLE IF EXISTS employees; DROP TABLE IF EXISTS scroll_a; DROP TABLE IF EXISTS scroll_b; DROP TABLE IF EXISTS lib_a; DROP TABLE IF EXISTS lib_b;");
                 db.exec(level.initSql);
             }
 
@@ -122,7 +122,7 @@ export const validateLevel = (db, userQuery, level) => {
 
             // Run User Query
             if (level.initSql) {
-                db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures;");
+                db.exec("DROP TABLE IF EXISTS items; DROP TABLE IF EXISTS villagers; DROP TABLE IF EXISTS paths; DROP TABLE IF EXISTS destinations; DROP TABLE IF EXISTS books; DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS codes; DROP TABLE IF EXISTS treasures; DROP TABLE IF EXISTS employees; DROP TABLE IF EXISTS scroll_a; DROP TABLE IF EXISTS scroll_b; DROP TABLE IF EXISTS lib_a; DROP TABLE IF EXISTS lib_b;");
                 db.exec(level.initSql);
             }
             const runRes = executeQuery(db, userQuery);

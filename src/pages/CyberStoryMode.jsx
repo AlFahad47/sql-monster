@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAudio } from '../context/AudioContext';
 import CyberTerminal from '../components/CyberTerminal';
 import CharacterDisplay from '../components/CharacterDisplay';
 import Certificate from '../components/Certificate';
@@ -46,7 +47,12 @@ const CyberStoryMode = () => {
     const [dialogueStep, setDialogueStep] = useState(0);
     const [isTyping, setIsTyping] = useState(false);
     const dialogueScrollRef = useRef(null);
+    const terminalRef = useRef(null);
+    const nextLevelBtnRef = useRef(null);
     const [mascotMood, setMascotMood] = useState('idle');
+
+    // Navigation Safety State
+    const [isReadyToAdvance, setIsReadyToAdvance] = useState(false);
 
     const currentChapter = localizedChapters[currentChapterIdx];
     const currentLevel = currentChapter?.levels[currentLevelIdx];
@@ -59,14 +65,44 @@ const CyberStoryMode = () => {
             setMascotMood('idle');
             setDialogueStep(0);
             setIsTyping(false);
+            setIsReadyToAdvance(false);
         }
     }, [currentLevel]);
+
+    // Safety delay for "Enter" key after solving
+    useEffect(() => {
+        let timeout;
+        if (isSolved) {
+            timeout = setTimeout(() => {
+                setIsReadyToAdvance(true);
+            }, 1000); // 1 second delay
+        } else {
+            setIsReadyToAdvance(false);
+        }
+        return () => clearTimeout(timeout);
+    }, [isSolved]);
+
+    const { speak, cancel } = useAudio();
 
     useEffect(() => {
         if (dialogueScrollRef.current) {
             dialogueScrollRef.current.scrollTop = dialogueScrollRef.current.scrollHeight;
         }
     }, [dialogueStep, isTyping]);
+
+    // Handle Speech
+    useEffect(() => {
+        if (currentLevel?.dialogue?.[dialogueStep]) {
+            const { text, speaker } = currentLevel.dialogue[dialogueStep];
+            const timer = setTimeout(() => {
+                speak(text, speaker);
+            }, 100);
+            return () => {
+                clearTimeout(timer);
+                cancel();
+            };
+        }
+    }, [dialogueStep, currentLevel, speak, cancel]);
 
     const handleAdvanceDialogue = () => {
         if (isTyping) {
@@ -77,10 +113,48 @@ const CyberStoryMode = () => {
         if (currentLevel.dialogue && dialogueStep < currentLevel.dialogue.length - 1) {
             setDialogueStep(prev => prev + 1);
             setIsTyping(true);
+        } else {
+            // Focus terminal when dialogue ends
+            terminalRef.current?.focus();
         }
     };
 
     const isDialogueActive = currentLevel?.dialogue && dialogueStep < currentLevel.dialogue.length - 1;
+
+    // Auto-focus logic when dialogue finishes (button disappears)
+    useEffect(() => {
+        if (!isDialogueActive && currentLevel) {
+            const timer = setTimeout(() => {
+                terminalRef.current?.focus();
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isDialogueActive, currentLevel]);
+
+    // Global Keydown Listener
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+                if (isDialogueActive) {
+                    e.preventDefault();
+                    handleAdvanceDialogue();
+                } else if (isSolved && isReadyToAdvance) {
+                    e.preventDefault();
+                    handleNextLevel();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [isDialogueActive, isSolved, isReadyToAdvance, isTyping, dialogueStep]);
+
+    // Auto-scroll to next level button on success
+    useEffect(() => {
+        if (isSolved && nextLevelBtnRef.current) {
+            nextLevelBtnRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [isSolved]);
 
     const handleCommand = async (cmd) => {
         if (!currentLevel) return;
@@ -217,7 +291,7 @@ const CyberStoryMode = () => {
                                         {isDialogueActive && (
                                             <div className="flex justify-center animate-pulse pt-2">
                                                 <div className="bg-green-900/50 text-green-500 text-xs px-3 py-1 border border-green-800 hover:bg-green-900 select-none transition-colors">
-                                                    [Click to continue]
+                                                    [Click or Press Enter to continue]
                                                 </div>
                                             </div>
                                         )}
@@ -249,10 +323,11 @@ const CyberStoryMode = () => {
                                         </div>
                                         {isSolved && (
                                             <button
+                                                ref={nextLevelBtnRef}
                                                 onClick={handleNextLevel}
                                                 className="mt-2 text-xs bg-green-700 text-white px-3 py-2 rounded-sm shadow hover:bg-green-600 transition-colors w-full flex items-center justify-center gap-2 whitespace-nowrap uppercase tracking-widest"
                                             >
-                                                Next Node <FaChevronRight />
+                                                Next Node (Press Enter) <FaChevronRight />
                                             </button>
                                         )}
                                     </motion.div>
@@ -292,6 +367,7 @@ const CyberStoryMode = () => {
                 <div className="lg:w-2/3 flex flex-col gap-4 min-h-0">
                     <div className="flex-1 h-full">
                         <CyberTerminal
+                            ref={terminalRef}
                             onCommand={handleCommand}
                             key={currentLevel.id}
                         />

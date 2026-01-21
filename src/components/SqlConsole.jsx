@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { FaPlay } from 'react-icons/fa';
 
-const SqlConsole = ({ onExecute, initialQuery = "" }) => {
+const SqlConsole = forwardRef(({ onExecute, initialQuery = "" }, ref) => {
     const [query, setQuery] = useState(initialQuery);
+    const textareaRef = useRef(null);
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            textareaRef.current?.focus();
+        }
+    }));
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -25,6 +32,7 @@ const SqlConsole = ({ onExecute, initialQuery = "" }) => {
                 </div>
                 <form onSubmit={handleSubmit} className="relative">
                     <textarea
+                        ref={textareaRef}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -43,6 +51,8 @@ const SqlConsole = ({ onExecute, initialQuery = "" }) => {
             </div>
         </div>
     );
-};
+});
+
+SqlConsole.displayName = 'SqlConsole';
 
 export default SqlConsole;

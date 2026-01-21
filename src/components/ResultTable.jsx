@@ -9,7 +9,7 @@ const ResultTable = ({ result, error }) => {
         </div>
     );
 
-    if (!result || !result.length) {
+    if (!result) {
         return error ? <ErrorBanner /> : null;
     }
 

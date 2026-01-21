@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSql } from '../context/SqlContext';
+import { useAudio } from '../context/AudioContext';
 import SqlConsole from '../components/SqlConsole';
 import ResultTable from '../components/ResultTable';
 import CharacterDisplay from '../components/CharacterDisplay';
@@ -55,9 +56,14 @@ const StoryMode = () => {
     const [dialogueStep, setDialogueStep] = useState(0);
     const [isTyping, setIsTyping] = useState(false);
     const dialogueScrollRef = useRef(null);
+    const consoleRef = useRef(null);
+    const nextLevelBtnRef = useRef(null);
 
     // Mascot Mood State
     const [mascotMood, setMascotMood] = useState('idle');
+
+    // Navigation Safety State
+    const [isReadyToAdvance, setIsReadyToAdvance] = useState(false);
 
     const currentChapter = localizedChapters[currentChapterIdx];
     const currentLevel = currentChapter?.levels[currentLevelIdx];
@@ -73,8 +79,25 @@ const StoryMode = () => {
             setMascotMood('idle');
             setDialogueStep(0);
             setIsTyping(false);
+            setIsReadyToAdvance(false);
         }
     }, [currentLevel]);
+
+    // Safety delay for "Enter" key after solving
+    useEffect(() => {
+        let timeout;
+        if (isSolved) {
+            timeout = setTimeout(() => {
+                setIsReadyToAdvance(true);
+            }, 1000); // 1 second delay
+        } else {
+            setIsReadyToAdvance(false);
+        }
+        return () => clearTimeout(timeout);
+    }, [isSolved]);
+
+    // Audio Hook
+    const { speak, cancel } = useAudio();
 
     // Auto-scroll to bottom of dialogue
     useEffect(() => {
@@ -82,6 +105,21 @@ const StoryMode = () => {
             dialogueScrollRef.current.scrollTop = dialogueScrollRef.current.scrollHeight;
         }
     }, [dialogueStep, isTyping]);
+
+    // Handle Speech
+    useEffect(() => {
+        if (currentLevel?.dialogue?.[dialogueStep]) {
+            const { text, speaker } = currentLevel.dialogue[dialogueStep];
+            // Small delay to ensure text is engaging
+            const timer = setTimeout(() => {
+                speak(text, speaker);
+            }, 100);
+            return () => {
+                clearTimeout(timer);
+                cancel();
+            };
+        }
+    }, [dialogueStep, currentLevel, speak, cancel]);
 
     const handleAdvanceDialogue = () => {
         if (isTyping) {
@@ -92,10 +130,50 @@ const StoryMode = () => {
         if (currentLevel.dialogue && dialogueStep < currentLevel.dialogue.length - 1) {
             setDialogueStep(prev => prev + 1);
             setIsTyping(true);
+        } else {
+            // Dialogue finished, focus console
+            consoleRef.current?.focus();
         }
     };
 
     const isDialogueActive = currentLevel?.dialogue && dialogueStep < currentLevel.dialogue.length - 1;
+
+    // Auto-focus console when dialogue finishes (button disappears)
+    useEffect(() => {
+        if (!isDialogueActive && currentLevel) {
+            // Small timeout to allow UI to settle
+            const timer = setTimeout(() => {
+                consoleRef.current?.focus();
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isDialogueActive, currentLevel]);
+
+    // Global Keydown Listener for advancing dialogue and next level
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            // If enter is pressed and dialogue is active
+            if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+                if (isDialogueActive) {
+                    e.preventDefault(); // Prevent accidental form submissions or other unwanted behaviors
+                    handleAdvanceDialogue();
+                } else if (isSolved && isReadyToAdvance) {
+                    e.preventDefault();
+                    handleNextLevel();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [isDialogueActive, isSolved, isReadyToAdvance, isTyping, dialogueStep]);
+
+    // Auto-scroll to next level button on success
+    useEffect(() => {
+        if (isSolved && nextLevelBtnRef.current) {
+            nextLevelBtnRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [isSolved]);
 
     const handleExecute = (query) => {
         if (!db || !currentLevel) return;
@@ -108,6 +186,7 @@ const StoryMode = () => {
             setValidationMsg({ type: 'success', text: message });
             setIsSolved(true);
             setMascotMood('success');
+            // isReadyToAdvance will be set by useEffect after delay
         } else {
             setResult(results);
             setExecutionError(error);
@@ -240,7 +319,7 @@ const StoryMode = () => {
                                         {isDialogueActive && (
                                             <div className="flex justify-center animate-bounce pt-2">
                                                 <div className="bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-xs px-3 py-1 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 select-none transition-colors">
-                                                    Click to continue...
+                                                    Click or Press Enter to continue...
                                                 </div>
                                             </div>
                                         )}
@@ -278,10 +357,11 @@ const StoryMode = () => {
                                         </div>
                                         {isSolved && (
                                             <button
+                                                ref={nextLevelBtnRef}
                                                 onClick={handleNextLevel}
                                                 className="mt-2 text-xs bg-green-600 text-white px-3 py-1 rounded shadow hover:bg-green-500 transition-colors w-full flex items-center justify-center gap-2 whitespace-nowrap"
                                             >
-                                                Next Level <FaChevronRight />
+                                                Next Level (Press Enter) <FaChevronRight />
                                             </button>
                                         )}
                                     </motion.div>
@@ -336,6 +416,7 @@ const StoryMode = () => {
                 <div className="lg:w-2/3 flex flex-col gap-4 min-h-0">
                     <div className="flex-none">
                         <SqlConsole
+                            ref={consoleRef}
                             onExecute={handleExecute}
                             initialQuery={currentLevel.initSql ? "" : ""}
                             key={currentLevel.id}

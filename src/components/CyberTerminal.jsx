@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShellInterpreter } from '../lib/ShellInterpreter';
 
-const CyberTerminal = ({ onCommand, initialOutput = [], user = 'guest', host = 'cyber-monster' }) => {
+const CyberTerminal = forwardRef(({ onCommand, initialOutput = [], user = 'guest', host = 'cyber-monster' }, ref) => {
     const [history, setHistory] = useState(initialOutput);
     const [currentInput, setCurrentInput] = useState('');
     const [commandHistory, setCommandHistory] = useState([]);
@@ -14,6 +14,12 @@ const CyberTerminal = ({ onCommand, initialOutput = [], user = 'guest', host = '
 
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            inputRef.current?.focus();
+        }
+    }));
 
     useEffect(() => {
         if (bottomRef.current) {
@@ -141,6 +147,8 @@ const CyberTerminal = ({ onCommand, initialOutput = [], user = 'guest', host = '
             <div ref={bottomRef} />
         </div>
     );
-};
+});
+
+CyberTerminal.displayName = 'CyberTerminal';
 
 export default CyberTerminal;

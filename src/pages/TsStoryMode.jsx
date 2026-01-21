@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTs } from '../context/TsContext';
+import { useAudio } from '../context/AudioContext';
 import TsConsole from '../components/TsConsole';
 import TsResult from '../components/TsResult';
 import CharacterDisplay from '../components/CharacterDisplay';
@@ -55,6 +56,10 @@ const TsStoryMode = () => {
     const dialogueScrollRef = useRef(null);
     const [mascotMood, setMascotMood] = useState('idle');
 
+    // Navigation Safety State
+    const [isReadyToAdvance, setIsReadyToAdvance] = useState(false);
+    const consoleRef = useRef(null);
+
     const currentChapter = localizedChapters[currentChapterIdx];
     const currentLevel = currentChapter?.levels[currentLevelIdx];
 
@@ -68,14 +73,44 @@ const TsStoryMode = () => {
             setMascotMood('idle');
             setDialogueStep(0);
             setIsTyping(false);
+            setIsReadyToAdvance(false);
         }
     }, [currentLevel]);
+
+    // Safety delay for "Enter" key after solving
+    useEffect(() => {
+        let timeout;
+        if (isSolved) {
+            timeout = setTimeout(() => {
+                setIsReadyToAdvance(true);
+            }, 1000); // 1 second delay
+        } else {
+            setIsReadyToAdvance(false);
+        }
+        return () => clearTimeout(timeout);
+    }, [isSolved]);
+
+    const { speak, cancel } = useAudio();
 
     useEffect(() => {
         if (dialogueScrollRef.current) {
             dialogueScrollRef.current.scrollTop = dialogueScrollRef.current.scrollHeight;
         }
     }, [dialogueStep, isTyping]);
+
+    // Handle Speech
+    useEffect(() => {
+        if (currentLevel?.dialogue?.[dialogueStep]) {
+            const { text, speaker } = currentLevel.dialogue[dialogueStep];
+            const timer = setTimeout(() => {
+                speak(text, speaker);
+            }, 100);
+            return () => {
+                clearTimeout(timer);
+                cancel();
+            };
+        }
+    }, [dialogueStep, currentLevel, speak, cancel]);
 
     const handleAdvanceDialogue = () => {
         if (isTyping) {
@@ -86,10 +121,41 @@ const TsStoryMode = () => {
         if (currentLevel.dialogue && dialogueStep < currentLevel.dialogue.length - 1) {
             setDialogueStep(prev => prev + 1);
             setIsTyping(true);
+        } else {
+            // Focus terminal when dialogue ends
+            consoleRef.current?.focus();
         }
     };
 
     const isDialogueActive = currentLevel?.dialogue && dialogueStep < currentLevel.dialogue.length - 1;
+
+    // Auto-focus logic when dialogue finishes (button disappears)
+    useEffect(() => {
+        if (!isDialogueActive && currentLevel) {
+            const timer = setTimeout(() => {
+                consoleRef.current?.focus();
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isDialogueActive, currentLevel]);
+
+    // Global Keydown Listener
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+                if (isDialogueActive) {
+                    e.preventDefault(); // Prevent accidental form submissions or other unwanted behaviors
+                    handleAdvanceDialogue();
+                } else if (isSolved && isReadyToAdvance) {
+                    e.preventDefault();
+                    handleNextLevel();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [isDialogueActive, isSolved, isReadyToAdvance, isTyping, dialogueStep]);
 
     const handleExecute = async (code) => {
         if (!currentLevel) return;
@@ -134,6 +200,7 @@ const TsStoryMode = () => {
             setValidationMsg({ type: 'success', text: msg });
             setIsSolved(true);
             setMascotMood('success');
+            // isReadyToAdvance will be set by useEffect after delay
         } else {
             setValidationMsg({ type: 'error', text: msg });
             setMascotMood('error');
@@ -331,6 +398,7 @@ const TsStoryMode = () => {
                 <div className="lg:w-2/3 flex flex-col gap-4 min-h-0">
                     <div className="flex-1 min-h-[50%]">
                         <TsConsole
+                            ref={consoleRef}
                             onExecute={handleExecute}
                             initialCode={currentLevel.initCode || ""}
                             key={currentLevel.id}
