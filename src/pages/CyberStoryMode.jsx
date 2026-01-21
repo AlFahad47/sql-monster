@@ -7,8 +7,9 @@ import Certificate from '../components/Certificate';
 import { useGameProgress } from '../hooks/useGameProgress';
 import { cyberChapters } from '../data/cyber_chapters';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChevronRight, FaLightbulb, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import { FaChevronRight, FaLightbulb, FaCheckCircle, FaExclamationCircle, FaCoins } from 'react-icons/fa';
 import PlanetProgress from '../components/PlanetProgress';
+import CoinPortal from '../components/CoinPortal';
 
 const Typewriter = ({ text, onComplete }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -35,7 +36,7 @@ const CyberStoryMode = () => {
     // Hardcode to English for now as per data structure
     const localizedChapters = cyberChapters['en'];
 
-    const { progress, isLoaded, advanceLevel, resetProgress, setUserName } = useGameProgress(localizedChapters.length, 'cyber-monster-save-v1');
+    const { progress, isLoaded, advanceLevel, resetProgress, setUserName, updateCoins } = useGameProgress(localizedChapters.length, 'cyber-monster-save-v1');
 
     const currentChapterIdx = progress.chapterIdx;
     const currentLevelIdx = progress.levelIdx;
@@ -43,6 +44,8 @@ const CyberStoryMode = () => {
     const [validationMsg, setValidationMsg] = useState(null);
     const [isSolved, setIsSolved] = useState(false);
     const [showHint, setShowHint] = useState(false);
+    const [hintSeen, setHintSeen] = useState(false);
+    const [answerRevealed, setAnswerRevealed] = useState(false);
 
     const [dialogueStep, setDialogueStep] = useState(0);
     const [isTyping, setIsTyping] = useState(false);
@@ -62,6 +65,8 @@ const CyberStoryMode = () => {
             setValidationMsg(null);
             setIsSolved(false);
             setShowHint(false);
+            setHintSeen(false);
+            setAnswerRevealed(false);
             setMascotMood('idle');
             setDialogueStep(0);
             setIsTyping(false);
@@ -162,31 +167,55 @@ const CyberStoryMode = () => {
         setMascotMood('thinking');
 
         // Simple exact match validation for now
-        // In future, could use regex or more complex parsing
         const isCorrect = cmd.trim() === currentLevel.expectedCommand;
 
         let outputLines = [];
 
         if (isCorrect) {
             outputLines = currentLevel.expectedOutput || ["Command success."];
-            setValidationMsg({ type: 'success', text: currentLevel.successMessage || 'Correct!' });
+            // Calculate Reward
+            let reward = 0;
+            if (answerRevealed) {
+                reward = 0;
+            } else if (hintSeen) {
+                reward = 2;
+            } else {
+                reward = 10;
+            }
+
+            if (!isSolved) {
+                updateCoins(reward);
+            }
+
+            setValidationMsg({ type: 'success', text: `${currentLevel.successMessage || 'Correct!'} (+${reward} Coins)` });
             setIsSolved(true);
             setMascotMood('success');
         } else {
             // Provide some feedback if it's the wrong command
-            // Or just generic "command not found" if it's completely wrong
-            // For now, let's just let the terminal handle "command not found" unless we want to hint
-            setValidationMsg(null); // Clear previous success/error
-            // Maybe give a hint if they fail?
+            setValidationMsg(null);
             setMascotMood('error');
-            // We return null output to let the terminal control its default behavior
-            // UNLESS we want to override it.
-            // Let's pass null so terminal handles "command not found" logic usually
-            // But if we want custom failure messages we can return them here.
             return null;
         }
 
         return { output: outputLines, success: isCorrect };
+    };
+
+    // Hint & Reveal Handlers
+    const handleRequestHint = () => {
+        if (!showHint) {
+            setHintSeen(true);
+        }
+        setShowHint(!showHint);
+    };
+
+    const handleRevealAnswer = () => {
+        if (progress.coins >= 20) {
+            updateCoins(-20);
+            setAnswerRevealed(true);
+        } else {
+            // Basic alert for now
+            alert("Insufficient Crypto Credits! Need 20 coins to decrypt.");
+        }
     };
 
     const handleNextLevel = () => {
@@ -247,6 +276,7 @@ const CyberStoryMode = () => {
                     totalChapters={localizedChapters.length}
                     currentChapterIdx={currentChapterIdx}
                 />
+                <CoinPortal coins={progress.coins} color="green" />
             </div>
 
             <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 pt-0 overflow-hidden">
@@ -337,7 +367,7 @@ const CyberStoryMode = () => {
                             <div className="mt-2 border-t border-green-900 pt-2">
                                 <div className="flex items-center justify-between">
                                     <button
-                                        onClick={() => setShowHint(!showHint)}
+                                        onClick={handleRequestHint}
                                         className="text-yellow-600 hover:text-yellow-500 text-xs font-bold flex items-center gap-1"
                                     >
                                         <FaLightbulb /> {showHint ? "Terminating Hint Process" : "Request Hint"}
@@ -354,6 +384,22 @@ const CyberStoryMode = () => {
                                             <div className="mb-2">
                                                 <strong>Hint:</strong> {currentLevel.hint}
                                             </div>
+                                            {currentLevel.solution && (
+                                                <div className="mt-2 pt-2 border-t border-green-900/50">
+                                                    {answerRevealed ? (
+                                                        <div className="mt-1 p-2 bg-black border border-green-800 text-green-400 font-mono">
+                                                            &gt; {currentLevel.solution || currentLevel.expectedCommand}
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleRevealAnswer}
+                                                            className="text-black bg-green-700 hover:bg-green-600 border border-green-500 px-3 py-1 transition-colors flex items-center gap-2 uppercase tracking-wide text-[10px]"
+                                                        >
+                                                            Decrypt Answer (20 Coins) <FaCoins />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>

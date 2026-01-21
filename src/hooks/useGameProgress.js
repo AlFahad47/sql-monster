@@ -6,7 +6,8 @@ export const useGameProgress = (totalChapters, saveKey = DEFAULT_SAVE_KEY) => {
     const [progress, setProgress] = useState({
         chapterIdx: 0,
         levelIdx: 0,
-        unlocked: { '0-0': true } // simplistic unlock tracking
+        unlocked: { '0-0': true }, // simplistic unlock tracking
+        coins: 0
     });
 
     const [isLoaded, setIsLoaded] = useState(false);
@@ -67,11 +68,20 @@ export const useGameProgress = (totalChapters, saveKey = DEFAULT_SAVE_KEY) => {
         setProgress(prev => ({ ...prev, userName: name, certificateId: id }));
     };
 
+    const updateCoins = (amount) => {
+        setProgress(prev => {
+            const newTotal = (prev.coins || 0) + amount;
+            return { ...prev, coins: newTotal < 0 ? 0 : newTotal };
+        });
+    };
+
     return {
         progress,
         isLoaded,
         advanceLevel,
         resetProgress,
-        setUserName
+        resetProgress,
+        setUserName,
+        updateCoins
     };
 };

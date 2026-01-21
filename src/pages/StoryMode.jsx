@@ -11,8 +11,9 @@ import { useGameProgress } from '../hooks/useGameProgress';
 import { chapters } from '../data/chapters';
 import { validateLevel } from '../lib/levelValidator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChevronRight, FaLightbulb, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import { FaChevronRight, FaLightbulb, FaCheckCircle, FaExclamationCircle, FaCoins } from 'react-icons/fa';
 import PlanetProgress from '../components/PlanetProgress';
+import CoinPortal from '../components/CoinPortal';
 
 const Typewriter = ({ text, onComplete }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -39,7 +40,7 @@ const StoryMode = () => {
     const { runQuery, db, isLoading, error: ctxError } = useSql();
     const { language, t } = useLanguage();
     const localizedChapters = chapters[language] || chapters['en'];
-    const { progress, isLoaded, advanceLevel, resetProgress, setUserName } = useGameProgress(localizedChapters.length);
+    const { progress, isLoaded, advanceLevel, resetProgress, setUserName, updateCoins } = useGameProgress(localizedChapters.length);
 
     // Derived state from progress
     const currentChapterIdx = progress.chapterIdx;
@@ -51,6 +52,9 @@ const StoryMode = () => {
     const [validationMsg, setValidationMsg] = useState(null);
     const [isSolved, setIsSolved] = useState(false);
     const [showHint, setShowHint] = useState(false);
+
+    const [hintSeen, setHintSeen] = useState(false);
+    const [answerRevealed, setAnswerRevealed] = useState(false);
 
     // Dialogue State
     const [dialogueStep, setDialogueStep] = useState(0);
@@ -76,6 +80,8 @@ const StoryMode = () => {
             setValidationMsg(null);
             setIsSolved(false);
             setShowHint(false);
+            setHintSeen(false);
+            setAnswerRevealed(false);
             setMascotMood('idle');
             setDialogueStep(0);
             setIsTyping(false);
@@ -183,7 +189,27 @@ const StoryMode = () => {
         if (success) {
             setResult(results);
             setExecutionError(null);
-            setValidationMsg({ type: 'success', text: message });
+
+            // Calculate Reward
+            let reward = 0;
+            if (answerRevealed) {
+                reward = 0;
+            } else if (hintSeen) {
+                reward = 2;
+            } else {
+                reward = 10;
+            }
+
+            // Only award if not previously solved (checking isSolved here is tricky as it sets true now)
+            // But usually we just award. 
+            // In a real game we'd check if level was ALREADY completed in saved progress to prevent farming.
+            // For now, let's assume one-time reward per session play of level or just always award for fun.
+            // Let's prevent farming by checking !isSolved
+            if (!isSolved) {
+                updateCoins(reward);
+            }
+
+            setValidationMsg({ type: 'success', text: `${message} (+${reward} Coins)` });
             setIsSolved(true);
             setMascotMood('success');
             // isReadyToAdvance will be set by useEffect after delay
@@ -198,6 +224,24 @@ const StoryMode = () => {
             });
             setIsSolved(false);
             setMascotMood('error');
+        }
+    };
+
+    // Hint & Reveal Handlers
+    const handleRequestHint = () => {
+        if (!showHint) {
+            setHintSeen(true);
+        }
+        setShowHint(!showHint);
+    };
+
+    const handleRevealAnswer = () => {
+        if (progress.coins >= 20) {
+            updateCoins(-20);
+            setAnswerRevealed(true);
+        } else {
+            // Shake effect or toast could go here
+            alert("Not enough coins! You need 20 coins to reveal the answer.");
         }
     };
 
@@ -266,6 +310,7 @@ const StoryMode = () => {
                     totalChapters={localizedChapters.length}
                     currentChapterIdx={currentChapterIdx}
                 />
+                <CoinPortal coins={progress.coins} color="yellow" />
             </div>
 
             {/* Main Content Area */}
@@ -372,7 +417,7 @@ const StoryMode = () => {
                             <div className="mt-2 border-t border-slate-200 dark:border-slate-700 pt-2">
                                 <div className="flex items-center justify-between">
                                     <button
-                                        onClick={() => setShowHint(!showHint)}
+                                        onClick={handleRequestHint}
                                         className="text-monster-accent hover:text-blue-600 text-xs font-bold flex items-center gap-1"
                                     >
                                         <FaLightbulb /> {showHint ? "Hide Hint" : "I'm stuck..."}
@@ -390,12 +435,20 @@ const StoryMode = () => {
                                                 <strong>Hint:</strong> {currentLevel.hint}
                                             </div>
                                             {currentLevel.solution && (
-                                                <details className="group">
-                                                    <summary className="cursor-pointer text-slate-400 hover:text-slate-600 select-none">Reveal Answer</summary>
-                                                    <div className="mt-1 p-1 bg-slate-800 text-green-400 rounded">
-                                                        {currentLevel.solution || currentLevel.expectedQuery}
-                                                    </div>
-                                                </details>
+                                                <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                                    {answerRevealed ? (
+                                                        <div className="mt-1 p-2 bg-slate-800 text-green-400 rounded">
+                                                            {currentLevel.solution || currentLevel.expectedQuery}
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleRevealAnswer}
+                                                            className="text-white bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition-colors flex items-center gap-2"
+                                                        >
+                                                            Buy Answer (20 Coins) <FaCoins />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </motion.div>
                                     )}

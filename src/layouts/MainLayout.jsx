@@ -60,6 +60,9 @@ const MainLayout = () => {
                             {isAudioEnabled ? <FaVolumeUp /> : <FaVolumeMute />}
                         </button>
 
+                        {/* Coin Portal Target */}
+                        <div id="navbar-coins-portal" className="flex items-center"></div>
+
                         {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}

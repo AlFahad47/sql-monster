@@ -9,8 +9,9 @@ import Certificate from '../components/Certificate';
 import { useGameProgress } from '../hooks/useGameProgress';
 import { tsChapters } from '../data/ts_chapters';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaChevronRight, FaLightbulb, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import { FaChevronRight, FaLightbulb, FaCheckCircle, FaExclamationCircle, FaCoins } from 'react-icons/fa';
 import PlanetProgress from '../components/PlanetProgress'; // Reusing this, might need slight label tweaks if it says "SQL"
+import CoinPortal from '../components/CoinPortal';
 
 const Typewriter = ({ text, onComplete }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -40,7 +41,7 @@ const TsStoryMode = () => {
     // Use 'en' for now as we only created English chapters
     const localizedChapters = tsChapters['en'];
 
-    const { progress, isLoaded, advanceLevel, resetProgress, setUserName } = useGameProgress(localizedChapters.length, 'ts-monster-save-v1');
+    const { progress, isLoaded, advanceLevel, resetProgress, setUserName, updateCoins } = useGameProgress(localizedChapters.length, 'ts-monster-save-v1');
 
     const currentChapterIdx = progress.chapterIdx;
     const currentLevelIdx = progress.levelIdx;
@@ -50,6 +51,9 @@ const TsStoryMode = () => {
     const [validationMsg, setValidationMsg] = useState(null);
     const [isSolved, setIsSolved] = useState(false);
     const [showHint, setShowHint] = useState(false);
+
+    const [hintSeen, setHintSeen] = useState(false);
+    const [answerRevealed, setAnswerRevealed] = useState(false);
 
     const [dialogueStep, setDialogueStep] = useState(0);
     const [isTyping, setIsTyping] = useState(false);
@@ -70,6 +74,8 @@ const TsStoryMode = () => {
             setValidationMsg(null);
             setIsSolved(false);
             setShowHint(false);
+            setHintSeen(false);
+            setAnswerRevealed(false);
             setMascotMood('idle');
             setDialogueStep(0);
             setIsTyping(false);
@@ -197,13 +203,44 @@ const TsStoryMode = () => {
         }
 
         if (solved) {
-            setValidationMsg({ type: 'success', text: msg });
+            // Calculate Reward
+            let reward = 0;
+            if (answerRevealed) {
+                reward = 0;
+            } else if (hintSeen) {
+                reward = 2;
+            } else {
+                reward = 10;
+            }
+
+            if (!isSolved) {
+                updateCoins(reward);
+            }
+
+            setValidationMsg({ type: 'success', text: `${msg} (+${reward} Coins)` });
             setIsSolved(true);
             setMascotMood('success');
             // isReadyToAdvance will be set by useEffect after delay
         } else {
             setValidationMsg({ type: 'error', text: msg });
             setMascotMood('error');
+        }
+    };
+
+    // Hint & Reveal Handlers
+    const handleRequestHint = () => {
+        if (!showHint) {
+            setHintSeen(true);
+        }
+        setShowHint(!showHint);
+    };
+
+    const handleRevealAnswer = () => {
+        if (progress.coins >= 20) {
+            updateCoins(-20);
+            setAnswerRevealed(true);
+        } else {
+            alert("Not enough coins! You need 20 coins to reveal the answer.");
         }
     };
 
@@ -265,6 +302,7 @@ const TsStoryMode = () => {
                     totalChapters={localizedChapters.length}
                     currentChapterIdx={currentChapterIdx}
                 />
+                <CoinPortal coins={progress.coins} color="purple" />
             </div>
 
             <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 pt-0 overflow-hidden">
@@ -354,7 +392,7 @@ const TsStoryMode = () => {
                             <div className="mt-2 border-t border-slate-200 dark:border-slate-700 pt-2">
                                 <div className="flex items-center justify-between">
                                     <button
-                                        onClick={() => setShowHint(!showHint)}
+                                        onClick={handleRequestHint}
                                         className="text-purple-500 hover:text-purple-600 text-xs font-bold flex items-center gap-1"
                                     >
                                         <FaLightbulb /> {showHint ? "Hide Hint" : "I'm stuck..."}
@@ -372,12 +410,20 @@ const TsStoryMode = () => {
                                                 <strong>Hint:</strong> {currentLevel.hint}
                                             </div>
                                             {currentLevel.solution && (
-                                                <details className="group">
-                                                    <summary className="cursor-pointer text-slate-400 hover:text-slate-600 select-none">Reveal Code</summary>
-                                                    <pre className="mt-1 p-2 bg-slate-800 text-green-400 rounded overflow-x-auto">
-                                                        {currentLevel.solution}
-                                                    </pre>
-                                                </details>
+                                                <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                                    {answerRevealed ? (
+                                                        <pre className="mt-1 p-2 bg-slate-800 text-green-400 rounded overflow-x-auto">
+                                                            {currentLevel.solution}
+                                                        </pre>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleRevealAnswer}
+                                                            className="text-white bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition-colors flex items-center gap-2"
+                                                        >
+                                                            Buy Code (20 Coins) <FaCoins />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </motion.div>
                                     )}
