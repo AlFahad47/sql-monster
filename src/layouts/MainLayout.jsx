@@ -5,6 +5,7 @@ import { useGameProgress } from '../hooks/useGameProgress';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAudio } from '../context/AudioContext';
+import { useAuth } from '../context/AuthProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MainLayout = () => {
@@ -16,6 +17,7 @@ const MainLayout = () => {
     const { theme, toggleTheme } = useTheme();
     const { language, toggleLanguage, t } = useLanguage();
     const { isAudioEnabled, toggleAudio } = useAudio();
+    const { user, loading, logOut, googleLogin } = useAuth();
     const navigate = useNavigate();
 
     const handleConfirmReset = () => {
@@ -63,6 +65,43 @@ const MainLayout = () => {
 
                         {/* Coin Portal Target */}
                         <div id="navbar-coins-portal" className="flex items-center"></div>
+
+                        {/* Auth Section */}
+                        <div className="flex items-center gap-4">
+                            {loading ? (
+                                <div className="animate-pulse w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                            ) : user ? (
+                                <div className="flex items-center gap-2 group relative">
+                                    <div className="text-right hidden lg:block">
+                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{user.displayName}</p>
+                                    </div>
+                                    {user.photoURL ? (
+                                        <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-600" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-xs font-bold">
+                                            {user.displayName?.charAt(0)}
+                                        </div>
+                                    )}
+
+                                    {/* Dropdown for logout */}
+                                    <div className="absolute right-0 top-full mt-2 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 hidden group-hover:block z-50">
+                                        <button
+                                            onClick={logOut}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={googleLogin}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-full transition-all shadow-md hover:shadow-blue-500/30"
+                                >
+                                    Login
+                                </button>
+                            )}
+                        </div>
 
                         {/* Theme Toggle */}
                         <button
@@ -149,6 +188,33 @@ const MainLayout = () => {
                                 >
                                     {isAudioEnabled ? <><FaVolumeUp /> Mute Audio</> : <><FaVolumeMute /> Enable Audio</>}
                                 </button>
+
+                                <div className="py-2 border-t border-slate-200 dark:border-white/10">
+                                    {loading ? (
+                                        <div className="animate-pulse h-8 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
+                                    ) : user ? (
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                {user.photoURL && <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />}
+                                                <span className="text-sm font-bold">{user.displayName}</span>
+                                            </div>
+                                            <button
+                                                onClick={logOut}
+                                                className="text-left text-red-500 hover:text-red-400 font-bold"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={googleLogin}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded font-bold"
+                                        >
+                                            Login with Google
+                                        </button>
+                                    )}
+                                </div>
+
                                 <button
                                     onClick={() => { setShowResetModal(true); setShowMobileMenu(false); }}
                                     className="text-left py-2 text-red-600 dark:text-red-400 flex items-center gap-2"
