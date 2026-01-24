@@ -38,8 +38,8 @@ const TsStoryMode = () => {
     const { runCode, isLoading } = useTs();
     const { language, t } = useLanguage(); // Might need to update t() for TS specific strings or just use hardcoded for now
 
-    // Use 'en' for now as we only created English chapters
-    const localizedChapters = tsChapters['en'];
+    // Use dynamic language selection
+    const localizedChapters = tsChapters[language] || tsChapters['en'];
 
     const { progress, isLoaded, advanceLevel, resetProgress, setUserName, updateCoins } = useGameProgress(localizedChapters.length, 'ts-monster-save-v1');
 

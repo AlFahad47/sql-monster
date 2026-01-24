@@ -15,7 +15,7 @@ export const tsChaptersEn = [
                 ],
                 story: "The void of `undefined` threatens to consume you. You must anchor yourself with a string.",
                 objective: 'Log "Hello TypeScript" to the console.',
-                hint: 'Use console.log("Your Message")',
+                hint: 'console.log("Hello TypeScript");',
                 initCode: `
 // Write your first TypeScript line
 `,
@@ -23,6 +23,25 @@ export const tsChaptersEn = [
                 successMessage: "The text solidifies in the void. It is immutable. It is known.",
                 type: 'typescript',
                 solution: `console.log("Hello TypeScript");`
+            },
+            {
+                id: '1-1-b',
+                title: 'String Theory',
+                dialogue: [
+                    { speaker: 'Compiler', text: "Variables need labels. If it's text, call it a 'string'." },
+                    { speaker: 'Compiler', text: "Declare a variable named `hero` of type `string`." }
+                ],
+                story: "Identify yourself to the system.",
+                objective: 'Declare `const hero: string = "SQL Monster";` and log it.',
+                hint: 'const hero: string = "SQL Monster";',
+                initCode: `
+// Declare your hero name
+`,
+                expectedOutput: ["SQL Monster"],
+                successMessage: "Identity confirmed. You are the SQL Monster.",
+                type: 'typescript',
+                solution: `const hero: string = "SQL Monster";
+console.log(hero);`
             },
             {
                 id: '1-2',
@@ -115,7 +134,7 @@ console.log(chaos);`
                     { speaker: 'Compiler', text: "Inputs must be typed. Outputs must be typed." }
                 ],
                 story: "The forge is cold. Reignite it with a precise instruction.",
-                objective: 'Create a function `sharpen` that takes `damage: number` and returns `number`. Return `damage + 5`. Log the result of `sharpen(10)`.',
+                objective: 'Create a function `sharpen` that takes `damage: number` and returns `number` equal to `damage + 5`. Log `sharpen(10)`.',
                 hint: 'function sharpen(damage: number): number { ... }',
                 initCode: `
 function sharpen(damage: number): number {
@@ -130,6 +149,27 @@ console.log(sharpen(10));
     return damage + 5;
 }
 console.log(sharpen(10));`
+            },
+            {
+                id: '2-1-b',
+                title: 'Double Trouble',
+                dialogue: [
+                    { speaker: 'Blacksmith', text: "Now double it! We need more power." },
+                    { speaker: 'Compiler', text: "Practice makes perfect. Write another function." }
+                ],
+                story: "The anvil rings again.",
+                objective: 'Create function `double` taking `val: number`. Return `val * 2`. Log `double(50)`.',
+                hint: 'return val * 2',
+                initCode: `
+// function double...
+`,
+                expectedOutput: ["100"],
+                successMessage: "Power doubled! Simple but effective.",
+                type: 'typescript',
+                solution: `function double(val: number): number {
+    return val * 2;
+}
+console.log(double(50));`
             },
             {
                 id: '2-2',
@@ -239,11 +279,31 @@ console.log(quickShot("dragon"));`
                 objective: 'Declare `damages: number[]` with [10, 20, 30]. Log the array.',
                 hint: 'let damages: number[] = [10, 20, 30];',
                 initCode: ``,
-                expectedOutput: ["[10,20,30]"], // Note: console.log(array) outputs with commas, no spaces by default in Node
+                expectedOutput: ["[10,20,30]"],
                 successMessage: "The army stands in perfect formation.",
                 type: 'typescript',
                 solution: `let damages: number[] = [10, 20, 30];
 console.log(damages);`
+            },
+            {
+                id: '3-1-b',
+                title: 'Report In',
+                dialogue: [
+                    { speaker: 'General', text: "I want to inspect the first soldier." },
+                    { speaker: 'Compiler', text: "Access array elements with index [0]." }
+                ],
+                story: "Check the vanguard.",
+                objective: 'Declare `damages` as [10, 20, 30]. Log `damages[0]`.',
+                hint: 'console.log(damages[0]);',
+                initCode: `
+let damages: number[] = [10, 20, 30];
+// Log the first element
+`,
+                expectedOutput: ["10"],
+                successMessage: "Soldier #0 reports for duty. Ten damage, ready to deploy.",
+                type: 'typescript',
+                solution: `let damages: number[] = [10, 20, 30];
+console.log(damages[0]);`
             },
             {
                 id: '3-2',
@@ -339,6 +399,37 @@ const myHero: Hero = { name: "You", health: 100, strength: 20 };
 console.log(myHero);`
             },
             {
+                id: '4-1-b',
+                title: 'The Impostor',
+                dialogue: [
+                    { speaker: 'Sage', text: "A hero without strength is no hero at all." },
+                    { speaker: 'Compiler', text: "TypeScript will scream if you miss a required property." }
+                ],
+                story: "Try to forge a fake hero. The system will reject it.",
+                objective: 'Define interface `Hero` (name, health, strength). Try to create a variable `fake: Hero = { name: "Fake", health: 100 }`. Notice the error? Now FIX it by adding strength: 0. Log it.',
+                hint: 'Add strength: 0 to the object literal.',
+                initCode: `
+interface Hero {
+    name: string;
+    health: number;
+    strength: number;
+}
+
+// const fake: Hero = { name: "Fake", health: 100 }; // Error!
+// Fix it below:
+`,
+                expectedOutput: ["{ name: 'Fake', health: 100, strength: 0 }"],
+                successMessage: "The error vanishes. The contract is fulfilled.",
+                type: 'typescript',
+                solution: `interface Hero {
+    name: string;
+    health: number;
+    strength: number;
+}
+const fake: Hero = { name: "Fake", health: 100, strength: 0 };
+console.log(fake);`
+            },
+            {
                 id: '4-2',
                 title: 'Optional Equipment',
                 dialogue: [
@@ -352,7 +443,7 @@ console.log(myHero);`
 interface Hero {
     name: string;
     health: number;
-    // add optional shield
+    shield?: boolean;
 }
 
 // Create and log two heroes
@@ -798,105 +889,15 @@ console.log(updated.health);`
                     { speaker: 'Inspector', text: "Everything must be present. Or select only what I need." },
                     { speaker: 'Compiler', text: "Required<T> and Pick<T, K>" }
                 ],
-                story: "Enforce completeness.",
-                objective: 'Use Required and Pick on a type with optional props.',
-                hint: 'Pick<Hero, "name" | "health">',
-                initCode: `
-type Hero = { name: string; health?: number; mana?: number };
-type CoreHero = Pick<Hero, "name" | "health">;
-type FullHero = Required<Hero>;
-
-console.log("Types defined");
-`,
-                expectedOutput: ["Types defined"],
-                successMessage: "You now wield precise type transformation.",
+                story: "Tighten the constraints.",
+                objective: 'type Hero = { name?: string; health?: number }; type StrictHero = Required<Hero>;',
+                hint: 'Required<Hero>',
+                initCode: ``,
+                expectedOutput: [],
+                successMessage: "Contracts tightened.",
                 type: 'typescript',
-                solution: `type Hero = { name: string; health?: number; mana?: number };
-type CoreHero = Pick<Hero, "name" | "health">;
-type FullHero = Required<Hero>;
-console.log("Types defined");`
-            },
-            {
-                id: '9-3',
-                title: 'Conditional Types',
-                dialogue: [
-                    { speaker: 'Oracle', text: "The type depends on the input." },
-                    { speaker: 'Compiler', text: "T extends U ? X : Y" }
-                ],
-                story: "Prophesy the resulting type.",
-                objective: 'type IsString<T> = T extends string ? "yes" : "no"; Log examples.',
-                hint: 'T extends string ? "yes" : "no"',
-                initCode: `
-type IsString<T> = T extends string ? "yes" : "no";
-
-type A = IsString<string>;
-type B = IsString<number>;
-
-console.log("Check console - types are yes and no");
-`,
-                expectedOutput: ["Check console - types are yes and no"],
-                successMessage: "You glimpse the future of types.",
-                type: 'typescript',
-                solution: `type IsString<T> = T extends string ? "yes" : "no";
-type A = IsString<string>;
-type B = IsString<number>;
-console.log("Check console - types are yes and no");`
-            }
-        ]
-    },
-    {
-        id: 'ts-chapter-10',
-        title: 'Chapter X: The Final Confrontation',
-        description: 'Face the Chaos Dragon. Combine everything you have learned to build a fully typed adventure.',
-        levels: [
-            {
-                id: '10-1',
-                title: 'The Ultimate Quest',
-                dialogue: [
-                    { speaker: 'Compiler', text: "You are ready. Build a small typed game system." },
-                    { speaker: 'You', text: "I will bring order to the chaos." }
-                ],
-                story: "Create a hero factory with generics, classes, unions, and utilities.",
-                objective: 'Implement a generic createHero function that returns a class instance with proper types.',
-                hint: 'Combine everything!',
-                initCode: `
-interface BaseStats {
-    health: number;
-    mana?: number;
-}
-
-class Character<T extends BaseStats> {
-    constructor(public stats: T, public name: string) {}
-    describe() {
-        console.log(\`\${this.name} has health: \${this.stats.health}\`);
-    }
-}
-
-function createHero<T extends BaseStats>(name: string, stats: T): Character<T> {
-    return new Character(stats, name);
-}
-
-const wizard = createHero("Gandalf", { health: 80, mana: 200 });
-wizard.describe();
-`,
-                expectedOutput: ["Gandalf has health: 80"],
-                successMessage: "The Chaos Dragon falls. The world is typed. You are now a TypeScript Master.",
-                type: 'typescript',
-                solution: `interface BaseStats {
-    health: number;
-    mana?: number;
-}
-class Character<T extends BaseStats> {
-    constructor(public stats: T, public name: string) {}
-    describe() {
-        console.log(\`\${this.name} has health: \${this.stats.health}\`);
-    }
-}
-function createHero<T extends BaseStats>(name: string, stats: T): Character<T> {
-    return new Character(stats, name);
-}
-const wizard = createHero("Gandalf", { health: 80, mana: 200 });
-wizard.describe();`
+                solution: `type Hero = { name?: string; health?: number };
+type StrictHero = Required<Hero>;`
             }
         ]
     }

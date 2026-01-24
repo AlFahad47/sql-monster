@@ -33,8 +33,9 @@ const Typewriter = ({ text, onComplete }) => {
 };
 
 const CyberStoryMode = () => {
-    // Hardcode to English for now as per data structure
-    const localizedChapters = cyberChapters['en'];
+    // Use dynamic language selection
+    const { language } = useLanguage();
+    const localizedChapters = cyberChapters[language] || cyberChapters['en'];
 
     const { progress, isLoaded, advanceLevel, resetProgress, setUserName, updateCoins } = useGameProgress(localizedChapters.length, 'cyber-monster-save-v1');
 
