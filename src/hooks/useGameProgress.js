@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthProvider';
-import { db } from '../firebase/firebase.config';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const DEFAULT_SAVE_KEY = 'sql-monster-save-v1';
 
@@ -16,9 +14,9 @@ export const useGameProgress = (totalChapters, saveKey = DEFAULT_SAVE_KEY) => {
 
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from local storage or Firestore on mount/user change
+    // Load from local storage or API on mount/user change
     useEffect(() => {
-        let unsubscribe = () => { };
+        let isMounted = true;
 
         const loadProgress = async () => {
             setIsLoaded(false);
@@ -33,53 +31,63 @@ export const useGameProgress = (totalChapters, saveKey = DEFAULT_SAVE_KEY) => {
                 console.error("Failed to load local save", e);
             }
 
-            // 2. If user is logged in, sync with Firestore
+            // 2. If user is logged in, sync with Backend
             if (user) {
-                const userRef = doc(db, 'users', user.uid, 'progress', saveKey);
+                try {
+                    const response = await fetch(`/api/progress/${user.uid}/${saveKey}`);
 
-                // Listen for real-time updates from cloud
-                unsubscribe = onSnapshot(userRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const cloudData = docSnap.data();
-                        // Optional: Conflict resolution strategy here. 
-                        // For now, cloud update overwrites local state (simplest sync)
-                        // But we might want to check timestamps or merge unlocked levels.
+                    if (response.ok) {
+                        const cloudData = await response.json();
 
-                        setProgress(prev => {
-                            // Simple merge: keep max coins, merge unlocked
-                            const mergedCoins = Math.max(prev.coins || 0, cloudData.coins || 0);
-                            const mergedUnlocked = { ...prev.unlocked, ...cloudData.unlocked };
-                            // Take the furthest progress
-                            let newChapter = cloudData.chapterIdx;
-                            let newLevel = cloudData.levelIdx;
+                        if (isMounted) {
+                            setProgress(prev => {
+                                // Simple merge: keep max coins, merge unlocked
+                                const mergedCoins = Math.max(prev.coins || 0, cloudData.coins || 0);
+                                const mergedUnlocked = { ...prev.unlocked, ...cloudData.unlocked };
+                                // Take the furthest progress
+                                let newChapter = cloudData.chapterIdx;
+                                let newLevel = cloudData.levelIdx;
 
-                            if (prev.chapterIdx > newChapter || (prev.chapterIdx === newChapter && prev.levelIdx > newLevel)) {
-                                newChapter = prev.chapterIdx;
-                                newLevel = prev.levelIdx;
-                            }
+                                if (prev.chapterIdx > newChapter || (prev.chapterIdx === newChapter && prev.levelIdx > newLevel)) {
+                                    newChapter = prev.chapterIdx;
+                                    newLevel = prev.levelIdx;
+                                }
 
-                            return {
-                                ...cloudData,
-                                ...prev,
-                                chapterIdx: newChapter,
-                                levelIdx: newLevel,
-                                unlocked: mergedUnlocked,
-                                coins: mergedCoins
-                            };
-                        });
+                                // Sync userName if available from Auth and not set in progress
+                                let effectiveUserName = cloudData.userName;
+                                if (!effectiveUserName && user.displayName) {
+                                    effectiveUserName = user.displayName;
+                                }
+
+                                return {
+                                    ...cloudData,
+                                    ...prev,
+                                    chapterIdx: newChapter,
+                                    levelIdx: newLevel,
+                                    unlocked: mergedUnlocked,
+                                    coins: mergedCoins,
+                                    userName: effectiveUserName || prev.userName
+                                };
+                            });
+                        }
+                    } else if (response.status === 404) {
+                        // New save file. Initialize with user name from Auth if available.
+                        if (user.displayName) {
+                            setProgress(prev => ({ ...prev, userName: user.displayName }));
+                        }
                     } else {
-                        // If no cloud data, allow the next save effect to push local data to cloud
+                        console.error("Failed to load cloud data:", response.statusText);
                     }
-                    setIsLoaded(true);
-                });
-            } else {
-                setIsLoaded(true);
+                } catch (error) {
+                    console.error("Error fetching cloud data:", error);
+                }
             }
+            if (isMounted) setIsLoaded(true);
         };
 
         loadProgress();
 
-        return () => unsubscribe();
+        return () => { isMounted = false; };
     }, [saveKey, user]);
 
     // Save whenever progress changes
@@ -89,18 +97,19 @@ export const useGameProgress = (totalChapters, saveKey = DEFAULT_SAVE_KEY) => {
         // 1. Save to Local Storage
         localStorage.setItem(saveKey, JSON.stringify(progress));
 
-        // 2. Save to Firestore if user exists
+        // 2. Save to Backend if user exists
         if (user) {
             const saveToCloud = async () => {
                 try {
-                    const userRef = doc(db, 'users', user.uid, 'progress', saveKey);
-                    await setDoc(userRef, progress, { merge: true });
+                    await fetch(`/api/progress/${user.uid}/${saveKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(progress),
+                    });
                 } catch (e) {
-                    if (e.code === 'permission-denied') {
-                        console.error("Cloud Sync Failed: Permission Denied. Please check your Firestore Security Rules in the Firebase Console.");
-                    } else {
-                        console.error("Failed to save to cloud", e);
-                    }
+                    console.error("Failed to save to cloud", e);
                 }
             };
             // Debounce could be added here if updates are very frequent
