@@ -39,7 +39,8 @@ const MainLayout = () => {
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-6 font-medium text-slate-600 dark:text-slate-300">
                         <Link to="/story" className="hover:text-monster-accent dark:hover:text-white transition-colors">{t('storyMode')}</Link>
-                        <Link to="/typescript" className="text-purple-500 hover:text-purple-400 font-bold transition-colors">TypeScript</Link>
+                        <Link to="/typescript" className="text-purple-500 hover:text-purple-400 font-bold transition-colors">{t('typeScript')}</Link>
+                        <Link to="/cyber-story" className="text-green-500 hover:text-green-400 font-bold transition-colors font-mono">{t('cyberSecurity')}</Link>
                         <Link to="/interview" className="hover:text-monster-accent dark:hover:text-white transition-colors">{t('interviewPrep')}</Link>
 
                         {/* Language Toggle */}
@@ -133,7 +134,8 @@ const MainLayout = () => {
                         >
                             <div className="flex flex-col p-4 gap-4 font-medium text-slate-600 dark:text-slate-300">
                                 <Link to="/story" onClick={() => setShowMobileMenu(false)} className="hover:text-monster-accent dark:hover:text-white py-2">{t('storyMode')}</Link>
-                                <Link to="/typescript" onClick={() => setShowMobileMenu(false)} className="text-purple-500 dark:text-purple-400 font-bold py-2">TypeScript</Link>
+                                <Link to="/typescript" onClick={() => setShowMobileMenu(false)} className="text-purple-500 dark:text-purple-400 font-bold py-2">{t('typeScript')}</Link>
+                                <Link to="/cyber-story" onClick={() => setShowMobileMenu(false)} className="text-green-500 dark:text-green-400 font-bold py-2 font-mono">{t('cyberSecurity')}</Link>
                                 <Link to="/interview" onClick={() => setShowMobileMenu(false)} className="hover:text-monster-accent dark:hover:text-white py-2">{t('interviewPrep')}</Link>
                                 <button
                                     onClick={toggleLanguage}

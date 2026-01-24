@@ -271,7 +271,7 @@ const CyberStoryMode = () => {
     const currentSpeaker = currentLevel?.dialogue?.[dialogueStep]?.speaker || 'System';
 
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)] max-w-7xl mx-auto relative font-mono">
+        <div className="flex flex-col lg:h-[calc(100vh-80px)] min-h-[calc(100vh-80px)] h-auto max-w-7xl mx-auto relative font-mono">
             <div className="px-4 pt-4">
                 <PlanetProgress
                     totalChapters={localizedChapters.length}
@@ -280,9 +280,9 @@ const CyberStoryMode = () => {
                 <CoinPortal coins={progress.coins} color="green" />
             </div>
 
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 pt-0 overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 pt-0 lg:overflow-hidden">
                 {/* Left Panel: Narrative */}
-                <div className="lg:w-1/3 flex flex-col min-h-0 relative">
+                <div className="lg:w-1/3 flex flex-col min-h-0 relative shrink-0">
                     <div
                         className="flex-1 overflow-y-auto mb-4 custom-scrollbar pr-2 flex flex-col"
                         ref={dialogueScrollRef}
@@ -411,7 +411,7 @@ const CyberStoryMode = () => {
                 </div>
 
                 {/* Right Panel: Terminal */}
-                <div className="lg:w-2/3 flex flex-col gap-4 min-h-0">
+                <div className="lg:w-2/3 flex flex-col gap-4 min-h-[500px] lg:min-h-0">
                     <div className="flex-1 h-full">
                         <CyberTerminal
                             ref={terminalRef}
